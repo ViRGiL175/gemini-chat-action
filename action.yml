@@ -8,6 +8,9 @@ inputs:
   text:
     description: "Text to send"
     required: true
+  system-instruction:
+    description: "Optional system-level instructions for the model. System instructions can be used to steer the model's behavior based on your specific needs and use cases by providing a natural language description of the task, including context, desired format, and/or examples."
+    required: false
 
 outputs:
   answer:
@@ -28,6 +31,7 @@ runs:
           echo "❌ Error: text input is required."
           exit 1
         fi
+        # No validation for optional system-instruction here, jq will handle if it's malformed later if used.
         echo "✅ All required inputs are present."
 
     - id: ensure-curl
@@ -70,14 +74,23 @@ runs:
       env:
         GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
         TEXT_CONTENT: ${{ inputs.text }}
+        SYSTEM_INSTRUCTION_TEXT: ${{ inputs.system-instruction }}
       run: |
         # Create a temporary file to store the result
         gemini_response_file="${RUNNER_TEMP}/gemini_response.json"
         request_file="${RUNNER_TEMP}/request.json"
 
-        # Generate JSON request using jq
-        jq -n --arg text_content "$TEXT_CONTENT" \
-          '{contents: [{parts: [{text: $text_content}]}]}' > "$request_file"
+        # Base jq script for the main content
+        base_payload_jq_script='{contents: [{parts: [{text: $text_content}]}]}'
+
+        # Conditionally add system_instruction
+        if [ -n "$SYSTEM_INSTRUCTION_TEXT" ]; then
+          jq -n --arg text_content "$TEXT_CONTENT" --arg si_text "$SYSTEM_INSTRUCTION_TEXT" \
+            "$base_payload_jq_script | . + {system_instruction: {parts: [{text: \$si_text}]}}" > "$request_file"
+        else
+          jq -n --arg text_content "$TEXT_CONTENT" \
+            "$base_payload_jq_script" > "$request_file"
+        fi
 
         # Execute the request and save the result directly to the file
         curl -s -X POST "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=$GEMINI_API_KEY" \
