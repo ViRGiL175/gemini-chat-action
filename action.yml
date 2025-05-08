@@ -1,5 +1,8 @@
 name: "Gemini chat Action"
 description: "Chat with Gemini from your Actions"
+branding:
+  icon: "message-square"
+  color: "blue"
 
 inputs:
   gemini-api-key:
