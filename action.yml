@@ -100,11 +100,29 @@ runs:
 
     - id: provide-output
       run: |
-        # Read the result from the file and write it to the output
+        # Read the result from the file
         gemini_response_file="${RUNNER_TEMP}/gemini_response.json"
 
-        # Extract the response text using jq
-        extracted_text=$(jq -r '.candidates[0].content.parts[0].text' "$gemini_response_file")
+        # Output the full formatted JSON response to the console
+        echo "✨ Full Gemini API Response (JSON): ✨"
+        echo "------------------------------------------"
+        if jq . "$gemini_response_file"; then
+          echo "" # Add a newline for better separation if jq succeeds
+        else
+          echo "⚠️ Warning: jq command failed or response was not valid JSON. Displaying raw content:"
+          cat "$gemini_response_file"
+          echo "" # Add a newline
+        fi
+        echo "------------------------------------------"
+
+        # Extract the response text using jq for the output variable
+        extracted_text=$(jq -r '.candidates[0].content.parts[0].text // ""' "$gemini_response_file")
+
+        # Output the extracted answer to the console for better visibility
+        echo "💬 Extracted Gemini's Answer: 💬"
+        echo "------------------------------------------"
+        echo "$extracted_text"
+        echo "------------------------------------------"
 
         echo "answer<<EOF" >> $GITHUB_OUTPUT
         echo "$extracted_text" >> $GITHUB_OUTPUT
