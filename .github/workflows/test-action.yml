@@ -19,6 +19,7 @@ jobs:
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           text: "how much is 2+2"
+          system-instruction: "You are a helpful assistant."
 
       - name: Verify Gemini Answer
         run: |
