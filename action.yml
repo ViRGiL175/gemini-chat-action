@@ -1,0 +1,99 @@
+name: "Gemini chat Action"
+description: "Chat with Gemini from your Actions"
+
+inputs:
+  gemini-api-key:
+    description: "API key for Gemini"
+    required: true
+  text:
+    description: "Text to send"
+    required: true
+
+outputs:
+  answer:
+    description: "The answer generated"
+    value: ${{ steps.provide-output.outputs.answer }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: validate-inputs
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.gemini-api-key }}" ]; then
+          echo "❌ Error: gemini-api-key input is required."
+          exit 1
+        fi
+        if [ -z "${{ inputs.text }}" ]; then
+          echo "❌ Error: text input is required."
+          exit 1
+        fi
+        echo "✅ All required inputs are present."
+
+    - id: ensure-curl
+      run: |
+        # Install curl if it is missing
+        if ! command -v curl &> /dev/null; then
+          echo "🔍 curl not found, installing..."
+          if command -v apt-get &> /dev/null; then
+            apt-get update && apt-get install -y curl
+          elif command -v apk &> /dev/null; then
+            apk add --no-cache curl
+          else
+            echo "❌ Failed to install curl. Please use a Docker image with curl pre-installed."
+            exit 1
+          fi
+        else
+          echo "✅ curl is already installed, continuing..."
+        fi
+      shell: bash
+
+    - id: ensure-jq
+      run: |
+        # Install jq if it is missing
+        if ! command -v jq &> /dev/null; then
+          echo "🔍 jq not found, installing..."
+          if command -v apt-get &> /dev/null; then
+            apt-get update && apt-get install -y jq
+          elif command -v apk &> /dev/null; then
+            apk add --no-cache jq
+          else
+            echo "❌ Failed to install jq. Please use a Docker image with jq pre-installed."
+            exit 1
+          fi
+        else
+          echo "✅ jq is already installed, continuing..."
+        fi
+      shell: bash
+
+    - id: gemini-call
+      env:
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+        TEXT_CONTENT: ${{ inputs.text }}
+      run: |
+        # Create a temporary file to store the result
+        gemini_response_file="${RUNNER_TEMP}/gemini_response.json"
+        request_file="${RUNNER_TEMP}/request.json"
+
+        # Generate JSON request using jq
+        jq -n --arg text_content "$TEXT_CONTENT" \
+          '{contents: [{parts: [{text: $text_content}]}]}' > "$request_file"
+
+        # Execute the request and save the result directly to the file
+        curl -s -X POST "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=$GEMINI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @"$request_file" > "$gemini_response_file"
+      shell: bash
+
+    - id: provide-output
+      run: |
+        # Read the result from the file and write it to the output
+        gemini_response_file="${RUNNER_TEMP}/gemini_response.json"
+
+        # Extract the response text using jq
+        extracted_text=$(jq -r '.candidates[0].content.parts[0].text' "$gemini_response_file")
+
+        echo "answer<<EOF" >> $GITHUB_OUTPUT
+        echo "$extracted_text" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash

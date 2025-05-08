@@ -1,0 +1,29 @@
+name: Test Gemini Chat Action
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test local action
+        id: gemini-chat
+        uses: ./
+        with:
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          text: "how much is 2+2"
+
+      - name: Verify Gemini Answer
+        run: |
+          echo "💬 Gemini's answer: ${{ steps.gemini-chat.outputs.answer }}"
+          if ! echo "${{ steps.gemini-chat.outputs.answer }}" | grep -q "4"; then
+            echo "❌ Error: Gemini did not answer '4' to the question 'how much is 2+2'."
+            exit 1
+          fi
+          echo "✅ Gemini answered correctly."
