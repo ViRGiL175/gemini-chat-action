@@ -1,0 +1,21 @@
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# macOS
+.DS_Store
+
+# GitHub Actions & act
+*.secrets
+.actrc
+*.env
+*.*.env
+
+# Temporary files and logs
+*.log
+tmp/
+temp/
