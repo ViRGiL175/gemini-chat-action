@@ -4,7 +4,7 @@ This action allows you to interact with Google's Gemini API directly from your G
 
 ## Features
 
-*   Sends text prompts to the Gemini API (model `gemini-2.5-flash-preview-05-20` via `v1beta` endpoint).
+*   Sends text prompts to the Gemini API (model `gemini-2.5-flash` via `v1beta` endpoint).
 *   Supports optional system-level instructions to guide the model's behavior.
 *   Validates required inputs (`gemini-api-key`, `text`).
 *   Ensures `curl` and `jq` are available in the runner environment, installing them if necessary (on Debian/Ubuntu and Alpine-based images).
