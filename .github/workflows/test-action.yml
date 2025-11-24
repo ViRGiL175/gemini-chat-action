@@ -18,7 +18,7 @@ jobs:
 
       - name: Test local action
         id: gemini-chat
-        if: ${{ secrets.GEMINI_API_KEY != '' }}
+        if: secrets.GEMINI_API_KEY != ''
         uses: ./
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
@@ -26,7 +26,7 @@ jobs:
           system-instruction: "You are a helpful assistant."
 
       - name: Verify Gemini Answer
-        if: ${{ secrets.GEMINI_API_KEY != '' }}
+        if: secrets.GEMINI_API_KEY != ''
         run: |
           echo "💬 Gemini's answer: ${{ steps.gemini-chat.outputs.answer }}"
           if ! echo "${{ steps.gemini-chat.outputs.answer }}" | grep -q "4"; then
@@ -36,7 +36,7 @@ jobs:
           echo "✅ Gemini answered correctly."
       
       - name: Skip test for Dependabot
-        if: ${{ secrets.GEMINI_API_KEY == '' }}
+        if: secrets.GEMINI_API_KEY == ''
         run: |
           echo "⚠️ Skipping API test because GEMINI_API_KEY secret is not available."
           echo "This is expected for Dependabot PRs for security reasons."
