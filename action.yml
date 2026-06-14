@@ -28,13 +28,16 @@ runs:
   using: "composite"
   steps:
     - id: validate-inputs
+      env:
+        VALIDATE_API_KEY: ${{ inputs.gemini-api-key }}
+        VALIDATE_TEXT: ${{ inputs.text }}
       shell: bash
       run: |
-        if [ -z "${{ inputs.gemini-api-key }}" ]; then
+        if [ -z "$VALIDATE_API_KEY" ]; then
           echo "Error: gemini-api-key input is required."
           exit 1
         fi
-        if [ -z "${{ inputs.text }}" ]; then
+        if [ -z "$VALIDATE_TEXT" ]; then
           echo "Error: text input is required."
           exit 1
         fi
