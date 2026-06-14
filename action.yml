@@ -103,10 +103,17 @@ runs:
             "$base_payload_jq_script" > "$request_file"
         fi
 
-        # Execute the request and save the result directly to the file
-        curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=$GEMINI_API_KEY" \
+        # Execute the request with retry on rate limit (429)
+        for attempt in 1 2 3 4 5; do
+          http_code=$(curl -s -o "$gemini_response_file" -w "%{http_code}" -X POST \
+            "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
-            -d @"$request_file" > "$gemini_response_file"
+            -d @"$request_file")
+          if [ "$http_code" != "429" ]; then break; fi
+          wait_secs=$((attempt * 20))
+          echo "Rate limited (429). Waiting ${wait_secs}s before retry ${attempt}/5..."
+          sleep "$wait_secs"
+        done
       shell: bash
 
     - id: provide-output
