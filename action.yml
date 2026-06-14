@@ -103,16 +103,14 @@ runs:
             "$base_payload_jq_script" > "$request_file"
         fi
 
-        # Execute the request with retry on rate limit (429)
-        for attempt in 1 2 3 4 5; do
+        # Execute the request with model rotation on rate limit (429)
+        for attempt_model in "$GEMINI_MODEL" gemini-2.5-flash gemini-2.0-flash gemini-1.5-flash; do
           http_code=$(curl -s -o "$gemini_response_file" -w "%{http_code}" -X POST \
-            "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=$GEMINI_API_KEY" \
+            "https://generativelanguage.googleapis.com/v1beta/models/${attempt_model}:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
             -d @"$request_file")
           if [ "$http_code" != "429" ]; then break; fi
-          wait_secs=$((attempt * 20))
-          echo "Rate limited (429). Waiting ${wait_secs}s before retry ${attempt}/5..."
-          sleep "$wait_secs"
+          echo "Rate limited (429) for model '${attempt_model}'. Rotating to next model..."
         done
       shell: bash
 
