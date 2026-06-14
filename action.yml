@@ -15,7 +15,7 @@ inputs:
     description: "Optional system-level instructions for the model. System instructions can be used to steer the model's behavior based on your specific needs and use cases by providing a natural language description of the task, including context, desired format, and/or examples."
     required: false
   model:
-    description: "Gemini model ID to use (e.g. gemini-3.5-flash, gemini-2.5-flash, gemini-2.5-pro)"
+    description: "Gemini model ID to use (e.g. gemini-3.5-flash, gemini-2.5-flash, gemini-2.5-flash-lite)"
     required: false
     default: "gemini-3.5-flash"
 
@@ -104,7 +104,7 @@ runs:
         fi
 
         # Execute the request with model rotation on rate limit (429)
-        for attempt_model in "$GEMINI_MODEL" gemini-2.5-flash gemini-2.0-flash gemini-1.5-flash; do
+        for attempt_model in "$GEMINI_MODEL" gemini-2.5-flash gemini-2.5-flash-lite; do
           http_code=$(curl -s -o "$gemini_response_file" -w "%{http_code}" -X POST \
             "https://generativelanguage.googleapis.com/v1beta/models/${attempt_model}:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
